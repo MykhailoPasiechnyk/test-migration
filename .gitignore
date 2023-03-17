@@ -1,2 +1,4 @@
 *.iml
 .idea
+*kubeconfig.yaml
+*service-account-token
