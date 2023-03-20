@@ -19,3 +19,20 @@ resource "kubernetes_service_account" "python-sa" {
     name = "python-service-account"
   }
 }
+
+resource "kubernetes_role" "pod-reader" {
+  metadata {
+    name      = "pod-reader"
+    namespace = kubernetes_namespace.python-job.metadata[0].name
+
+    labels = {
+      env    = "test"
+      target = "python-sa"
+    }
+  }
+  rule {
+    api_groups = [""]
+    resources  = ["pods"]
+    verbs      = ["get", "list", "watch"]
+  }
+}
