@@ -43,4 +43,3 @@ if __name__ == '__main__':
         if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
             pod_age = get_pod_age(pod)
             get_time_log(info_logger, pod, pod_age)
-        continue
