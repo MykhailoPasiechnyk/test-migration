@@ -16,25 +16,27 @@ resource "kubernetes_namespace" "python-job" {
 
 resource "kubernetes_service_account" "python-sa" {
   metadata {
-    name = "python-service-account"
+    name      = "python-service-account"
+    namespace = kubernetes_namespace.python-job.metadata[0].name
   }
-
-  secret {
-    name = kubernetes_secret.python-sa-secret.metadata[0].name
-  }
-
 }
 
 resource "kubernetes_secret" "python-sa-secret" {
   metadata {
-    name = "python-secret"
+    name      = "python-sa-secret"
+    namespace = kubernetes_namespace.python-job.metadata[0].name
+
+    annotations = {
+      "kubernetes.io/service-account.name" = kubernetes_service_account.python-sa.metadata[0].name
+    }
   }
+
+  type = "kubernetes.io/service-account-token"
 }
 
-resource "kubernetes_role" "pod-reader" {
+resource "kubernetes_cluster_role" "pod-reader" {
   metadata {
     name      = "pod-reader"
-    namespace = kubernetes_namespace.python-job.metadata[0].name
 
     labels = {
       env    = "test"
@@ -43,19 +45,19 @@ resource "kubernetes_role" "pod-reader" {
   }
   rule {
     api_groups = [""]
-    resources  = ["pods"]
+    resources  = ["namespaces","pods"]
     verbs      = ["get", "list", "watch"]
   }
 }
 
-resource "kubernetes_role_binding" "pod-reader-rb" {
+resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
   metadata {
     name = "pod-reader-rb"
   }
   role_ref {
     api_group = "rbac.authorization.k8s.io"
-    kind      = "Role"
-    name      = kubernetes_role.pod-reader.metadata[0].name
+    kind      = "ClusterRole"
+    name      = kubernetes_cluster_role.pod-reader.metadata[0].name
   }
   subject {
     kind      = "ServiceAccount"
