@@ -4,6 +4,7 @@ import logging
 import sys
 
 FORMAT = '%(asctime)s - %(message)s'
+FILE_NAME = 'info.log'
 
 
 def get_pod_age(pod_data):
@@ -14,6 +15,20 @@ def get_pod_age(pod_data):
     return f'{int(age_hours)}h:{int(age_minutes)}m'
 
 
+def create_info_logger(msg_format, filename):
+    logging.basicConfig(format=msg_format, filename=filename)
+
+    logger = logging.getLogger('info_log')
+    handler = logging.StreamHandler(sys.stdout)
+    log_formatter = logging.Formatter(msg_format)
+
+    handler.setFormatter(log_formatter)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    return logger
+
+
 def get_time_log(loger, pod_data, age):
     loger.info(f'Name: {pod_data.metadata.name}, labels: {pod_data.metadata.labels}, AGE: {age};')
 
@@ -22,17 +37,10 @@ if __name__ == '__main__':
     config.load_config()
     v1 = client.CoreV1Api()
     list_pod = v1.list_pod_for_all_namespaces()
-
-    logging.basicConfig(format=FORMAT, filename='info.log')
-    logger = logging.getLogger("info_log")
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    log_formatter = logging.Formatter(FORMAT)
-    handler.setFormatter(log_formatter)
-    logger.addHandler(handler)
+    info_logger = create_info_logger(FORMAT, filename=FILE_NAME)
 
     for pod in list_pod.items:
         if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
             pod_age = get_pod_age(pod)
-            get_time_log(logger, pod, pod_age)
+            get_time_log(info_logger, pod, pod_age)
         continue
