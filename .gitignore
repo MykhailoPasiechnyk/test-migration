@@ -2,3 +2,5 @@
 .idea
 *kubeconfig.yaml
 *service-account-token
+*.terraform*
+*.tfstate*
