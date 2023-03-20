@@ -1,8 +1,10 @@
 from kubernetes import client, config
 from datetime import datetime
 import logging
+import sys
 
 FORMAT = '%(asctime)s - %(message)s'
+FILE_NAME = 'info.log'
 
 
 def get_pod_age(pod_data):
@@ -13,18 +15,31 @@ def get_pod_age(pod_data):
     return f'{int(age_hours)}h:{int(age_minutes)}m'
 
 
-def get_time_log(pod_data, log_format, age):
-    logging.basicConfig(format=log_format, level=logging.INFO)
-    logging.info(f'Name: {pod_data.metadata.name}, labels: {pod_data.metadata.labels}, AGE: {age};')
+def create_info_logger(msg_format, filename):
+    logging.basicConfig(format=msg_format, filename=filename)
+
+    logger = logging.getLogger('info_log')
+    handler = logging.StreamHandler(sys.stdout)
+    log_formatter = logging.Formatter(msg_format)
+
+    handler.setFormatter(log_formatter)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    return logger
+
+
+def get_time_log(loger, pod_data, age):
+    loger.info(f'Name: {pod_data.metadata.name}, labels: {pod_data.metadata.labels}, AGE: {age};')
 
 
 if __name__ == '__main__':
     config.load_incluster_config()
     v1 = client.CoreV1Api()
-    list_pod = v1.list_namespaced_pod(namespace="default")
+    list_pod = v1.list_pod_for_all_namespaces()
+    info_logger = create_info_logger(FORMAT, filename=FILE_NAME)
 
     for pod in list_pod.items:
         if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
             pod_age = get_pod_age(pod)
-            get_time_log(pod, FORMAT, pod_age)
-        continue
+            get_time_log(info_logger, pod, pod_age)
