@@ -18,6 +18,17 @@ resource "kubernetes_service_account" "python-sa" {
   metadata {
     name = "python-service-account"
   }
+
+  secret {
+    name = kubernetes_secret.python-sa-secret.metadata[0].name
+  }
+
+}
+
+resource "kubernetes_secret" "python-sa-secret" {
+  metadata {
+    name = "python-secret"
+  }
 }
 
 resource "kubernetes_role" "pod-reader" {
