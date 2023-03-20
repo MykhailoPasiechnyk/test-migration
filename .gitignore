@@ -4,3 +4,4 @@
 *service-account-token
 *.terraform*
 *.tfstate*
+*info.log
