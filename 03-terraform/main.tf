@@ -36,3 +36,19 @@ resource "kubernetes_role" "pod-reader" {
     verbs      = ["get", "list", "watch"]
   }
 }
+
+resource "kubernetes_role_binding" "pod-reader-rb" {
+  metadata {
+    name = "pod-reader-rb"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.pod-reader.metadata[0].name
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.python-sa.metadata[0].name
+    namespace = kubernetes_namespace.python-job.metadata[0].name
+  }
+}
