@@ -80,8 +80,7 @@ resource "kubernetes_cron_job_v1" "python-job" {
     job_template {
       metadata {}
       spec {
-        backoff_limit              = 2
-        ttl_seconds_after_finished = 10
+        backoff_limit = 2
         template {
           metadata {}
           spec {
