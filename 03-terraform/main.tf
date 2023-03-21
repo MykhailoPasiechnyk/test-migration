@@ -68,7 +68,8 @@ resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
 
 resource "kubernetes_cron_job" "python-job" {
   metadata {
-    name = "python-job"
+    name      = "python-job"
+    namespace = kubernetes_namespace.python-job.metadata[0].name
   }
   spec {
     concurrency_policy            = "Allow"
