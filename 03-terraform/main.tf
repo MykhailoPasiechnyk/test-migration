@@ -66,7 +66,7 @@ resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
   }
 }
 
-resource "kubernetes_cron_job" "python-job" {
+resource "kubernetes_cron_job_v1" "python-job" {
   metadata {
     name      = "python-job"
     namespace = kubernetes_namespace.python-job.metadata[0].name
@@ -74,7 +74,7 @@ resource "kubernetes_cron_job" "python-job" {
   spec {
     concurrency_policy            = "Allow"
     failed_jobs_history_limit     = 5
-    schedule                      = "1 0 * * *"
+    schedule                      = "*/1 * * * *"
     successful_jobs_history_limit = 10
     starting_deadline_seconds     = 10
     job_template {
@@ -90,6 +90,12 @@ resource "kubernetes_cron_job" "python-job" {
               name    = "python-job"
               image   = "pasiechnyk/my-python:1.3"
               command = ["python", "/app/main.py"]
+              resources {
+                requests = {
+                  memory = "128Mi"
+                  cpu    = "500m"
+                }
+              }
             }
             restart_policy = "OnFailure"
             image_pull_secrets {
