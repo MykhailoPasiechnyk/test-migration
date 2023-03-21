@@ -36,7 +36,7 @@ resource "kubernetes_secret" "python-sa-secret" {
 
 resource "kubernetes_cluster_role" "pod-reader" {
   metadata {
-    name      = "pod-reader"
+    name = "pod-reader"
 
     labels = {
       env    = "test"
@@ -45,7 +45,7 @@ resource "kubernetes_cluster_role" "pod-reader" {
   }
   rule {
     api_groups = [""]
-    resources  = ["namespaces","pods"]
+    resources  = ["namespaces", "pods"]
     verbs      = ["get", "list", "watch"]
   }
 }
@@ -63,5 +63,40 @@ resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
     kind      = "ServiceAccount"
     name      = kubernetes_service_account.python-sa.metadata[0].name
     namespace = kubernetes_namespace.python-job.metadata[0].name
+  }
+}
+
+resource "kubernetes_cron_job" "python-job" {
+  metadata {
+    name = "python-job"
+  }
+  spec {
+    concurrency_policy            = "Allow"
+    failed_jobs_history_limit     = 5
+    schedule                      = "1 0 * * *"
+    successful_jobs_history_limit = 10
+    starting_deadline_seconds     = 10
+    job_template {
+      metadata {}
+      spec {
+        backoff_limit              = 2
+        ttl_seconds_after_finished = 10
+        template {
+          metadata {}
+          spec {
+            service_account_name = kubernetes_service_account.python-sa.metadata[0].name
+            container {
+              name    = "python-job"
+              image   = "pasiechnyk/my-python:1.3"
+              command = ["python", "/app/main.py"]
+            }
+            restart_policy = "OnFailure"
+            image_pull_secrets {
+              name = kubernetes_secret.python-sa-secret.metadata[0].name
+            }
+          }
+        }
+      }
+    }
   }
 }
