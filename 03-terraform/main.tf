@@ -87,7 +87,7 @@ resource "kubernetes_cron_job_v1" "python-job" {
             service_account_name = kubernetes_service_account.python-sa.metadata[0].name
             container {
               name    = "python-job"
-              image   = "pasiechnyk/my-python:1.3"
+              image   = "pasiechnyk/my-python"
               command = ["python", "/app/main.py"]
               volume_mount {
                 mount_path = "/data"
