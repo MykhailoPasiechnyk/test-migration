@@ -1,4 +1,4 @@
-.PHONY : clean
+.PHONY : clean, test-deployment
 
 push: build
 	docker push pasiechnyk/my-python
