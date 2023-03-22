@@ -1,10 +1,10 @@
 from kubernetes import client, config
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 import logging
-import sys
 
 FORMAT = '%(asctime)s - %(message)s'
-FILE_NAME = 'info.log'
+FILE_NAME = '/data/info.log'
 
 
 def get_pod_age(pod_data):
@@ -16,16 +16,13 @@ def get_pod_age(pod_data):
 
 
 def create_info_logger(msg_format, filename):
-    logging.basicConfig(format=msg_format, filename=filename)
-
+    logging.basicConfig(format=msg_format)
     logger = logging.getLogger('info_log')
-    handler = logging.StreamHandler(sys.stdout)
     log_formatter = logging.Formatter(msg_format)
-
-    handler.setFormatter(log_formatter)
+    file_handler = TimedRotatingFileHandler(filename, backupCount=50, when='s', interval=59)
+    file_handler.setFormatter(log_formatter)
     logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
+    logger.addHandler(file_handler)
     return logger
 
 
