@@ -89,11 +89,21 @@ resource "kubernetes_cron_job_v1" "python-job" {
               name    = "python-job"
               image   = "pasiechnyk/my-python:1.3"
               command = ["python", "/app/main.py"]
+              volume_mount {
+                mount_path = "/data"
+                name       = "python-volume"
+              }
               resources {
                 requests = {
                   memory = "128Mi"
                   cpu    = "500m"
                 }
+              }
+            }
+            volume {
+              name = "python-volume"
+              persistent_volume_claim {
+                claim_name = kubernetes_persistent_volume_claim.pvc.metadata[0].name
               }
             }
             restart_policy = "OnFailure"
@@ -137,7 +147,7 @@ resource "kubernetes_persistent_volume" "pv" {
     storage_class_name = "hostpath"
     persistent_volume_source {
       host_path {
-        path = "/data"
+        path = "/mnt/data"
       }
     }
   }
