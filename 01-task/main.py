@@ -1,5 +1,6 @@
 from kubernetes import client, config
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 import logging
 import sys
 
@@ -22,9 +23,13 @@ def create_info_logger(msg_format, filename):
     handler = logging.StreamHandler(sys.stdout)
     log_formatter = logging.Formatter(msg_format)
 
+    # file_handler = RotatingFileHandler(filename, maxBytes=3, backupCount=100)
+    # file_handler.setFormatter(log_formatter)
+
     handler.setFormatter(log_formatter)
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
+    # logger.addHandler(file_handler)
 
     return logger
 
@@ -43,3 +48,4 @@ if __name__ == '__main__':
         if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
             pod_age = get_pod_age(pod)
             get_time_log(info_logger, pod, pod_age)
+

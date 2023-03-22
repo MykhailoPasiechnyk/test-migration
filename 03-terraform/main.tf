@@ -106,3 +106,39 @@ resource "kubernetes_cron_job_v1" "python-job" {
     }
   }
 }
+
+resource "kubernetes_persistent_volume_claim" "pvc" {
+  metadata {
+    name = "python-pvc"
+    namespace = kubernetes_namespace.python-job.metadata[0].name
+  }
+  spec {
+    access_modes = ["ReadWriteMany"]
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+    volume_name = kubernetes_persistent_volume.pv.metadata[0].name
+    storage_class_name = "hostpath"
+  }
+}
+
+resource "kubernetes_persistent_volume" "pv" {
+  metadata {
+    name = "python-pv"
+  }
+  spec {
+    access_modes = ["ReadWriteMany"]
+    capacity     = {
+      storage = "1Gi"
+    }
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name = "hostpath"
+    persistent_volume_source {
+      host_path {
+        path = "/data"
+      }
+    }
+  }
+}
