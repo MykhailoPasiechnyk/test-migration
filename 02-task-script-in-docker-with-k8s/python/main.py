@@ -5,6 +5,8 @@ import logging
 
 FORMAT = '%(asctime)s - %(message)s'
 FILE_NAME = '/data/info.log'
+LABEL_KEY = 'env'
+LABEL_VALUE = 'test'
 
 
 def get_pod_age(pod_data):
@@ -19,7 +21,7 @@ def create_info_logger(msg_format, filename):
     logging.basicConfig(format=msg_format)
     logger = logging.getLogger('info_log')
     log_formatter = logging.Formatter(msg_format)
-    file_handler = TimedRotatingFileHandler(filename, backupCount=50, when='s', interval=59)
+    file_handler = TimedRotatingFileHandler(filename, backupCount=50, when='s', interval=1)
     file_handler.setFormatter(log_formatter)
     logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
@@ -37,6 +39,7 @@ if __name__ == '__main__':
     info_logger = create_info_logger(FORMAT, filename=FILE_NAME)
 
     for pod in list_pod.items:
-        if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
+        labels = pod.metadata.labels
+        if labels is not None and LABEL_KEY in labels.keys() and labels[LABEL_KEY] == LABEL_VALUE:
             pod_age = get_pod_age(pod)
             get_time_log(info_logger, pod, pod_age)

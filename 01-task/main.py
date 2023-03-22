@@ -38,6 +38,7 @@ if __name__ == '__main__':
     info_logger = create_info_logger(FORMAT, filename=FILE_NAME)
 
     for pod in list_pod.items:
-        if 'env' in pod.metadata.labels.keys() and pod.metadata.labels['env'] == 'test':
+        labels = pod.metadata.labels
+        if labels is not None and 'env' in labels.keys() and labels['env'] == 'test':
             pod_age = get_pod_age(pod)
             get_time_log(info_logger, pod, pod_age)
