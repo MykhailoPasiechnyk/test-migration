@@ -10,7 +10,7 @@ locals {
   pvc             = kubernetes_persistent_volume_claim.pvc.metadata.0.name
   pv              = kubernetes_persistent_volume.pv.metadata.0.name
 
-  labels          = {
+  labels = {
     env       = "test"
     owner     = "MykhailoPasiechnyk"
     terraform = "true"
@@ -102,32 +102,30 @@ resource "kubernetes_cron_job_v1" "cron_job" {
     })
   }
   spec {
-    concurrency_policy            = "Allow"
-    failed_jobs_history_limit     = 5
-    schedule                      = "*/1 * * * *"
-    successful_jobs_history_limit = 10
-    starting_deadline_seconds     = 10
+    concurrency_policy            = var.concurrency_policy
+    failed_jobs_history_limit     = var.failed_jobs_history_limit
+    schedule                      = var.job_schedule
+    successful_jobs_history_limit = var.successful_jobs_history_limit
+    starting_deadline_seconds     = var.starting_deadline_seconds
     job_template {
       metadata {}
       spec {
-        backoff_limit = 2
+        backoff_limit = var.backoff_limit
         template {
           metadata {}
           spec {
             service_account_name = local.service_account
             container {
-              name    = "python-job"
-              image   = var.cron_job_image
-              command = ["python", "/app/main.py"]
+              name    = var.container_name
+              image   = "${var.cron_job_image}:${var.image_tag}"
+              command = var.container_entrypoint
               volume_mount {
                 mount_path = "/data"
                 name       = "python-volume"
               }
               resources {
-                requests = {
-                  memory = "128Mi"
-                  cpu    = "500m"
-                }
+                requests = var.job_resources_requests
+                limits   = var.job_resources_limits
               }
             }
             volume {
@@ -136,7 +134,7 @@ resource "kubernetes_cron_job_v1" "cron_job" {
                 claim_name = local.pvc
               }
             }
-            restart_policy = "OnFailure"
+            restart_policy = var.restart_policy
             image_pull_secrets {
               name = kubernetes_secret.python-sa-secret.metadata.0.name
             }
@@ -157,11 +155,9 @@ resource "kubernetes_persistent_volume_claim" "pvc" {
     })
   }
   spec {
-    access_modes = ["ReadWriteMany"]
+    access_modes = var.pvc_access_modes
     resources {
-      requests = {
-        storage = "1Gi"
-      }
+      requests = var.pvc_resources_requests
     }
     volume_name        = local.pv
     storage_class_name = "hostpath"
@@ -177,11 +173,11 @@ resource "kubernetes_persistent_volume" "pv" {
     })
   }
   spec {
-    access_modes = ["ReadWriteMany"]
+    access_modes = var.pv_access_modes
     capacity     = {
-      storage = "1Gi"
+      storage = var.pv_capacity
     }
-    persistent_volume_reclaim_policy = "Retain"
+    persistent_volume_reclaim_policy = var.pv_reclaim_policy
     storage_class_name               = "hostpath"
     persistent_volume_source {
       host_path {
