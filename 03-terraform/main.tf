@@ -1,10 +1,10 @@
 provider "kubernetes" {
-  config_path    = "~/.kube/config"
-  config_context = "docker-desktop"
+  config_path    = var.config_path
+  config_context = var.config_context
 }
 
 locals {
-  namespace = kubernetes_namespace.python-job.metadata[0].name
+  namespace = kubernetes_namespace.python-job.metadata.0.name
   labels    = {
     env       = "test"
     owner     = "MykhailoPasiechnyk"
@@ -112,7 +112,7 @@ resource "kubernetes_cron_job_v1" "python-job" {
             service_account_name = kubernetes_service_account.python-sa.metadata[0].name
             container {
               name    = "python-job"
-              image   = "pasiechnyk/my-python"
+              image   = var.cron_job_image
               command = ["python", "/app/main.py"]
               volume_mount {
                 mount_path = "/data"
