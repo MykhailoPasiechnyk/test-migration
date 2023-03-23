@@ -9,3 +9,9 @@ variable "config_context" {
   description = "Context to choose from the config file."
   default     = "docker-desktop"
 }
+
+variable "cron_job_image" {
+  type        = string
+  description = "The image for cron job"
+  default     = "pasiechnyk/my-python"
+}
