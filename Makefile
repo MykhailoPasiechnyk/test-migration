@@ -1,6 +1,12 @@
-.PHONY : clean, test-deployment
+.PHONY : clean, docker, test-deployment
 
-push: build
+config:
+	kubectl config view --minify > 02-task-script-in-docker-with-k8s/k8s/kubeconfig.yaml
+
+token:
+	kubectl get secret python-secret -o jsonpath='{.data.token}' | base64 --decode > 02-task-script-in-docker-with-k8s/k8s/service-account-token
+
+docker: build
 	docker push pasiechnyk/my-python
 
 build:
