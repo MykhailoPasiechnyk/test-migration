@@ -4,15 +4,20 @@ provider "kubernetes" {
 }
 
 locals {
-  namespace = kubernetes_namespace.python-job.metadata.0.name
-  labels    = {
+  namespace       = kubernetes_namespace.namespace.metadata.0.name
+  service_account = kubernetes_service_account.service_account.metadata.0.name
+  cluster_role    = kubernetes_cluster_role.cluster_role.metadata.0.name
+  pvc             = kubernetes_persistent_volume_claim.pvc.metadata.0.name
+  pv              = kubernetes_persistent_volume.pv.metadata.0.name
+
+  labels          = {
     env       = "test"
     owner     = "MykhailoPasiechnyk"
     terraform = "true"
   }
 }
 
-resource "kubernetes_namespace" "python-job" {
+resource "kubernetes_namespace" "namespace" {
   metadata {
     name = "python-job"
 
@@ -22,7 +27,7 @@ resource "kubernetes_namespace" "python-job" {
   }
 }
 
-resource "kubernetes_service_account" "python-sa" {
+resource "kubernetes_service_account" "service_account" {
   metadata {
     name      = "python-service-account"
     namespace = local.namespace
@@ -39,7 +44,7 @@ resource "kubernetes_secret" "python-sa-secret" {
     namespace = local.namespace
 
     annotations = {
-      "kubernetes.io/service-account.name" = kubernetes_service_account.python-sa.metadata[0].name
+      "kubernetes.io/service-account.name" = local.service_account
     }
 
     labels = merge(local.labels, {
@@ -50,7 +55,7 @@ resource "kubernetes_secret" "python-sa-secret" {
   type = "kubernetes.io/service-account-token"
 }
 
-resource "kubernetes_cluster_role" "pod-reader" {
+resource "kubernetes_cluster_role" "cluster_role" {
   metadata {
     name = "pod-reader"
 
@@ -65,7 +70,7 @@ resource "kubernetes_cluster_role" "pod-reader" {
   }
 }
 
-resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
+resource "kubernetes_cluster_role_binding" "cluster_role_binding" {
   metadata {
     name = "pod-reader-rb"
 
@@ -78,16 +83,16 @@ resource "kubernetes_cluster_role_binding" "pod-reader-rb" {
   role_ref {
     api_group = "rbac.authorization.k8s.io"
     kind      = "ClusterRole"
-    name      = kubernetes_cluster_role.pod-reader.metadata[0].name
+    name      = local.cluster_role
   }
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account.python-sa.metadata[0].name
+    name      = local.service_account
     namespace = local.namespace
   }
 }
 
-resource "kubernetes_cron_job_v1" "python-job" {
+resource "kubernetes_cron_job_v1" "cron_job" {
   metadata {
     name      = "python-job"
     namespace = local.namespace
@@ -109,7 +114,7 @@ resource "kubernetes_cron_job_v1" "python-job" {
         template {
           metadata {}
           spec {
-            service_account_name = kubernetes_service_account.python-sa.metadata[0].name
+            service_account_name = local.service_account
             container {
               name    = "python-job"
               image   = var.cron_job_image
@@ -128,12 +133,12 @@ resource "kubernetes_cron_job_v1" "python-job" {
             volume {
               name = "python-volume"
               persistent_volume_claim {
-                claim_name = kubernetes_persistent_volume_claim.pvc.metadata[0].name
+                claim_name = local.pvc
               }
             }
             restart_policy = "OnFailure"
             image_pull_secrets {
-              name = kubernetes_secret.python-sa-secret.metadata[0].name
+              name = kubernetes_secret.python-sa-secret.metadata.0.name
             }
           }
         }
@@ -158,7 +163,7 @@ resource "kubernetes_persistent_volume_claim" "pvc" {
         storage = "1Gi"
       }
     }
-    volume_name        = kubernetes_persistent_volume.pv.metadata[0].name
+    volume_name        = local.pv
     storage_class_name = "hostpath"
   }
 }
