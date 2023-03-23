@@ -174,9 +174,7 @@ resource "kubernetes_persistent_volume" "pv" {
   }
   spec {
     access_modes = var.pv_access_modes
-    capacity     = {
-      storage = var.pv_capacity
-    }
+    capacity     = var.pv_capacity
     persistent_volume_reclaim_policy = var.pv_reclaim_policy
     storage_class_name               = "hostpath"
     persistent_volume_source {
